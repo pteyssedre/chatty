@@ -1,0 +1,9 @@
+{
+  "name": "chatty",
+  "dependencies": {
+    "debug": "registry:npm/debug#2.0.0+20160511151334"
+  },
+  "globalDependencies": {
+    "ws": "registry:dt/ws#0.0.0+20160317120654"
+  }
+}

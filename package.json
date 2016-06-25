@@ -1,0 +1,32 @@
+{
+  "name": "chatty",
+  "version": "1.0.0",
+  "description": "chat server using encrypted communication",
+  "main": "dist/index.js",
+  "scripts": {
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pteyssedre/chatty.git"
+  },
+  "keywords": [
+    "chat",
+    "server",
+    "encrypted",
+    "encryption",
+    "rsa",
+    "aes"
+  ],
+  "author": "pteyssedre",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/pteyssedre/chatty/issues"
+  },
+  "homepage": "https://github.com/pteyssedre/chatty#readme",
+  "dependencies": {
+    "lazy-uac": "0.0.1",
+    "typescript": "^1.8.10",
+    "ws": "^1.1.0"
+  }
+}
