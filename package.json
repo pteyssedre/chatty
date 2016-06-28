@@ -25,8 +25,13 @@
   },
   "homepage": "https://github.com/pteyssedre/chatty#readme",
   "dependencies": {
-    "lazy-uac": "0.0.2",
+    "lazy-format-logger": "0.0.3",
+    "lazy-uac": "0.0.4",
     "typescript": "^1.8.10",
     "ws": "^1.1.0"
+  },
+  "devDependencies": {
+    "mocha": "^2.5.3",
+    "chai": "^3.5.0"
   }
 }

@@ -1,9 +1,12 @@
 // import http = require("http");
 import ws = require("ws");
 import lazyUac = require("lazy-uac");
-import {Server} from "ws";
+import { Server } from "ws";
+import lazyFL = require("lazy-format-logger");
 
 export module Chatty {
+
+    let Log: lazyFL.Logger = new lazyFL.Logger();
 
     class Guid {
 
@@ -46,6 +49,10 @@ export module Chatty {
         private msgParser: MessageParser;
         private authenticator: Authenticator;
 
+        public static setLevel(level: lazyFL.LogLevel): void {
+            Log = new lazyFL.Logger(level);
+        }
+
         constructor(port?: number, msgParser?: MessageParser, authenticator?: Authenticator) {
             this.chatPort = port;
             if (isNaN(this.chatPort)) {
@@ -74,26 +81,26 @@ export module Chatty {
 
         private _addClient(socket: any): void {
             let client = new ChatClient(socket);
-            console.log("INFO", new Date(), "connection of client", client.UID);
+            Log.i("ChatServer", "server", "addClient", "new client connected " + client.UID);
             this.clients.push(client);
             client.onMessage(message => {
-                console.log("INFO", new Date(), "new message from client", client.UID);
+                Log.i("ChatServer", "client", "onMessage", "new message form " + client.UID);
                 this.msgParser(message, client);
             });
             client.onClose(() => {
-                console.log("INFO", new Date(), "disconnection of client", client.UID);
+                Log.i("ChatServer", "client", "onClose", "connection close by " + client.UID);
                 this._removeClient(client);
             });
         }
 
         private _removeClient(client: ChatClient): void {
             let index = this.clients.indexOf(client);
+            Log.i("ChatServer", "server", "removeClient", "removing client " + client.UID);
             this.clients.splice(index, 1);
         }
 
         private _onMessage(message: string, client: ChatClient): void {
             if (message) {
-                console.log("DEBUG", new Date(), message);
                 try {
                     let parsed = JSON.parse(message);
                     let type = Number(parsed.type);
@@ -103,7 +110,7 @@ export module Chatty {
                                 if (!parsed.credential || client.isAuthenticated) {
                                     // error to client  ? "invalid request" ?
                                 }
-                                console.log("DEBUG", new Date(), "client request auth", client.isAuthenticated);
+                                Log.d("ChatServer", "server", "onMessage", "client request auth by " + client.UID);
                                 /**
                                  * Bubble up the authentication request
                                  * to ensure external authentication
@@ -121,44 +128,49 @@ export module Chatty {
                                     });
                                 break;
                             case 1: //USER BROADCAST
-                                console.log("DEBUG", new Date(), "client request broadcast");
+                                Log.d("ChatServer", "server", "onMessage", "client request broadcast by " + client.UID);
                                 /**
                                  * internal
                                  */
                                 break;
                             case 2: //USER LISTING
-                                console.log("DEBUG", new Date(), "client request listing");
+                                Log.d("ChatServer", "server", "onMessage", "client request listing by " + client.UID);
                                 /**
                                  * internal
                                  */
                                 break;
                             case 3: //USER ExCHANGE
-                                console.log("DEBUG", new Date(), "client request exchange");
+                                Log.d("ChatServer", "server", "onMessage", "client request exchange by " + client.UID);
                                 break;
                             case 4: //USER STATUS
-                                console.log("DEBUG", new Date(), "client request status change");
+                                Log.d("ChatServer", "server", "onMessage", "client request status change by " + client.UID);
                                 /**
                                  * internal & external
                                  */
                                 break;
                         }
                     } else {
+                        Log.c("ChatServer", "server", "onMessage", "message doesn't have any type to act, it will be ignored. Client:" + client.UID);
                         console.error("ERROR", new Date(),
                             "message doesn't have any type to act, it will be ignored");
                     }
                 } catch (JSONException) {
-                    console.error("ERROR", new Date(), JSONException);
+                    Log.c("ChatServer", "server", "onMessage", "message can't be parse Client:" + client.UID, JSONException);
                 }
             }
         }
 
         private _onAuthentication(client: ChatClient, login: string, password: string, callback: (success: boolean)=>void) {
-            console.log("INFO", login, password);
             let ti = this.clients.indexOf(client);
-            console.log("INFO", "client", ti);
-            client.isAuthenticated = true;
-            client.UserId = Guid.newGuid();
-            callback(true);
+            if (ti > -1 && login.length > 0 && password.length > 0) {
+                Log.d("ChatServer", "server", "onAuthentication", "valid stub login by" + client.UID);
+                client.isAuthenticated = true;
+                client.UserId = Guid.newGuid();
+                callback(true);
+            } else {
+                Log.e("ChatServer", "server", "onAuthentication", "invalid stub login by" + client.UID);
+                callback(false);
+            }
         }
     }
 
@@ -184,7 +196,7 @@ export module Chatty {
                     msg = JSON.stringify(message);
                     break;
             }
-            console.log("INFO", new Date(), "sending message to:", this.uid);
+            Log.d("ChatClient", "send", "sending message to:", this.uid);
             this.socket.send(msg);
         }
 

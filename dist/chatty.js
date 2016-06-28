@@ -1,8 +1,10 @@
 "use strict";
 // import http = require("http");
 var ws = require("ws");
+var lazyFL = require("lazy-format-logger");
 var Chatty;
 (function (Chatty) {
+    var Log = new lazyFL.Logger();
     var Guid = (function () {
         function Guid() {
         }
@@ -50,6 +52,9 @@ var Chatty;
             }
             this.clients = [];
         }
+        ChatServer.setLevel = function (level) {
+            Log = new lazyFL.Logger(level);
+        };
         ChatServer.prototype.Connect = function (callback) {
             var _this = this;
             this.server = ws.createServer({ port: this.chatPort });
@@ -61,24 +66,24 @@ var Chatty;
         ChatServer.prototype._addClient = function (socket) {
             var _this = this;
             var client = new ChatClient(socket);
-            console.log("INFO", new Date(), "connection of client", client.UID);
+            Log.i("ChatServer", "server", "addClient", "new client connected " + client.UID);
             this.clients.push(client);
             client.onMessage(function (message) {
-                console.log("INFO", new Date(), "new message from client", client.UID);
+                Log.i("ChatServer", "client", "onMessage", "new message form " + client.UID);
                 _this.msgParser(message, client);
             });
             client.onClose(function () {
-                console.log("INFO", new Date(), "disconnection of client", client.UID);
+                Log.i("ChatServer", "client", "onClose", "connection close by " + client.UID);
                 _this._removeClient(client);
             });
         };
         ChatServer.prototype._removeClient = function (client) {
             var index = this.clients.indexOf(client);
+            Log.i("ChatServer", "server", "removeClient", "removing client " + client.UID);
             this.clients.splice(index, 1);
         };
         ChatServer.prototype._onMessage = function (message, client) {
             if (message) {
-                console.log("DEBUG", new Date(), message);
                 try {
                     var parsed = JSON.parse(message);
                     var type = Number(parsed.type);
@@ -87,7 +92,7 @@ var Chatty;
                             case 0:
                                 if (!parsed.credential || client.isAuthenticated) {
                                 }
-                                console.log("DEBUG", new Date(), "client request auth", client.isAuthenticated);
+                                Log.d("ChatServer", "server", "onMessage", "client request auth by " + client.UID);
                                 /**
                                  * Bubble up the authentication request
                                  * to ensure external authentication
@@ -102,22 +107,22 @@ var Chatty;
                                 });
                                 break;
                             case 1:
-                                console.log("DEBUG", new Date(), "client request broadcast");
+                                Log.d("ChatServer", "server", "onMessage", "client request broadcast by " + client.UID);
                                 /**
                                  * internal
                                  */
                                 break;
                             case 2:
-                                console.log("DEBUG", new Date(), "client request listing");
+                                Log.d("ChatServer", "server", "onMessage", "client request listing by " + client.UID);
                                 /**
                                  * internal
                                  */
                                 break;
                             case 3:
-                                console.log("DEBUG", new Date(), "client request exchange");
+                                Log.d("ChatServer", "server", "onMessage", "client request exchange by " + client.UID);
                                 break;
                             case 4:
-                                console.log("DEBUG", new Date(), "client request status change");
+                                Log.d("ChatServer", "server", "onMessage", "client request status change by " + client.UID);
                                 /**
                                  * internal & external
                                  */
@@ -125,21 +130,27 @@ var Chatty;
                         }
                     }
                     else {
+                        Log.c("ChatServer", "server", "onMessage", "message doesn't have any type to act, it will be ignored. Client:" + client.UID);
                         console.error("ERROR", new Date(), "message doesn't have any type to act, it will be ignored");
                     }
                 }
                 catch (JSONException) {
-                    console.error("ERROR", new Date(), JSONException);
+                    Log.c("ChatServer", "server", "onMessage", "message can't be parse Client:" + client.UID, JSONException);
                 }
             }
         };
         ChatServer.prototype._onAuthentication = function (client, login, password, callback) {
-            console.log("INFO", login, password);
             var ti = this.clients.indexOf(client);
-            console.log("INFO", "client", ti);
-            client.isAuthenticated = true;
-            client.UserId = Guid.newGuid();
-            callback(true);
+            if (ti > -1 && login.length > 0 && password.length > 0) {
+                Log.d("ChatServer", "server", "onAuthentication", "valid stub login by" + client.UID);
+                client.isAuthenticated = true;
+                client.UserId = Guid.newGuid();
+                callback(true);
+            }
+            else {
+                Log.e("ChatServer", "server", "onAuthentication", "invalid stub login by" + client.UID);
+                callback(false);
+            }
         };
         return ChatServer;
     }());
@@ -160,7 +171,7 @@ var Chatty;
                     msg = JSON.stringify(message);
                     break;
             }
-            console.log("INFO", new Date(), "sending message to:", this.uid);
+            Log.d("ChatClient", "send", "sending message to:", this.uid);
             this.socket.send(msg);
         };
         Object.defineProperty(ChatClient.prototype, "UID", {

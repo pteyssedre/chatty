@@ -1,3 +1,4 @@
+import lazyFL = require("lazy-format-logger");
 export declare module Chatty {
     interface Authenticator {
         (client: ChatClient, login: string, password: string, callback: (success: boolean) => void): any;
@@ -25,6 +26,7 @@ export declare module Chatty {
         private clients;
         private msgParser;
         private authenticator;
+        static setLevel(level: lazyFL.LogLevel): void;
         constructor(port?: number, msgParser?: MessageParser, authenticator?: Authenticator);
         Connect(callback: () => void): void;
         private _addClient(socket);
