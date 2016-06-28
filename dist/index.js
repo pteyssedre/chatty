@@ -16,9 +16,28 @@ userManager.StartManager(function (error, report) {
         if (user) {
             console.log("INFO", new Date(), "Admin user added");
         }
-        var server = new chatty_1.Chatty.ChatServer();
-        server.Connect(function () {
-            console.log("INFO", new Date(), "ChatServer connected");
-        });
+        else {
+            userManager.GetUserByUserName(admin.Email, function (user) {
+                admin = user;
+                console.log("admin user retrieved", admin.Id);
+            });
+        }
+        startChattyServer();
     });
 });
+function startChattyServer() {
+    var server = new chatty_1.Chatty.ChatServer(9991, null, AuthenticateUser);
+    server.Connect(function () {
+        console.log("INFO", new Date(), "ChatServer connected");
+    });
+}
+function AuthenticateUser(client, login, password, callback) {
+    console.log("AuthenticateUser request", login, client.UID);
+    userManager.Authenticate(login, password, function (match, user) {
+        if (match) {
+            client.isAuthenticated = true;
+            client.UserId = user.Id;
+        }
+        callback(match);
+    });
+}

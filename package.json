@@ -1,6 +1,6 @@
 {
   "name": "chatty",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "chat server using encrypted communication",
   "main": "dist/index.js",
   "scripts": {
@@ -25,7 +25,7 @@
   },
   "homepage": "https://github.com/pteyssedre/chatty#readme",
   "dependencies": {
-    "lazy-uac": "0.0.1",
+    "lazy-uac": "0.0.2",
     "typescript": "^1.8.10",
     "ws": "^1.1.0"
   }

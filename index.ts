@@ -2,9 +2,10 @@ import http = require("http");
 import ws = require("ws");
 import lazyUac = require("lazy-uac");
 import {Chatty} from "./chatty";
+import User = lazyUac.DataModel.User;
+import Role = lazyUac.DataModel.Role;
+import MessageType = Chatty.ChatMessageType;
 
-let User = lazyUac.DataModel.User;
-let Role = lazyUac.DataModel.Role;
 let userManager = new lazyUac.LazyUAC.UserManager();
 
 userManager.StartManager((error: Error, report: any): void => {
@@ -19,11 +20,32 @@ userManager.StartManager((error: Error, report: any): void => {
     userManager.AddUser(admin, user => {
         if (user) {
             console.log("INFO", new Date(), "Admin user added");
+        } else {
+            userManager.GetUserByUserName(admin.Email, user => {
+                admin = user;
+                console.log("admin user retrieved", admin.Id);
+            });
         }
-        let server = new Chatty.ChatServer();
-        server.Connect(()=> {
-            console.log("INFO", new Date(), "ChatServer connected");
-        });
+        startChattyServer();
     });
 });
 
+function startChattyServer(): void {
+
+    let server = new Chatty.ChatServer(9991, null, AuthenticateUser);
+
+    server.Connect(()=> {
+        console.log("INFO", new Date(), "ChatServer connected");
+    });
+}
+
+function AuthenticateUser(client: Chatty.ChatClient, login: string, password: string, callback: (success: boolean) =>void): void {
+    console.log("AuthenticateUser request", login, client.UID);
+    userManager.Authenticate(login, password, (match: boolean, user: User): void => {
+        if (match) {
+            client.isAuthenticated = true;
+            client.UserId = user.Id;
+        }
+        callback(match);
+    });
+}
