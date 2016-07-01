@@ -1,31 +1,29 @@
 "use strict";
 var lazyUac = require("lazy-uac");
-var chatty_1 = require("./chatty");
-var User = lazyUac.DataModel.User;
-var Role = lazyUac.DataModel.Role;
 var lazyFormatLogger = require("lazy-format-logger");
-var Logger = lazyFormatLogger.Logger;
-var LogLevel = lazyFormatLogger.LogLevel;
-var UserManager = lazyUac.LazyUAC.UserManager;
-var logLevel = LogLevel.VERBOSE;
+var chatty_1 = require("./chatty");
+var logLevel = lazyFormatLogger.LogLevel.VERBOSE;
 var Log;
 var userManager;
 function setLogLevel() {
-    Log = new Logger(logLevel);
+    Log = new lazyFormatLogger.Logger(logLevel);
     lazyUac.LazyUAC.UserManager.setLevel(logLevel);
     chatty_1.Chatty.ChatServer.setLevel(logLevel);
 }
 function startUserManager() {
     setLogLevel();
-    userManager = new UserManager();
+    userManager = new lazyUac.LazyUAC.UserManager();
     userManager.StartManager(function (error, report) {
         if (error) {
             Log.c("Chatty", "UserManager", "StartManager", error);
             throw error;
         }
         Log.d("Chatty", "UserManager", "StartManager", report);
-        var admin = new User("admin", "admin", "admin@teyssedre.ca", "12345");
-        admin.Roles |= Role.ADMIN | Role.SUPER_ADMIN | Role.USER | Role.VIEWER;
+        var admin = new lazyUac.DataModel.User("admin", "admin", "admin@teyssedre.ca", "12345");
+        admin.Roles |= lazyUac.DataModel.Role.ADMIN
+            | lazyUac.DataModel.Role.SUPER_ADMIN
+            | lazyUac.DataModel.Role.USER
+            | lazyUac.DataModel.Role.VIEWER;
         userManager.AddUser(admin, function (user) {
             if (user) {
                 Log.d("Chatty", "UserManager", "AddUser", "Admin user added");
@@ -41,7 +39,8 @@ function startUserManager() {
     });
 }
 function startChattyServer() {
-    var server = new chatty_1.Chatty.ChatServer(9991, null, AuthenticateUser);
+    var options = { port: 9991, authenticator: AuthenticateUser, registration: RegisterUser };
+    var server = new chatty_1.Chatty.ChatServer(options);
     server.Connect(function () {
         Log.d("Chatty", "ChatServer", "Connect", "ChatServer connected");
     });
@@ -54,6 +53,16 @@ function AuthenticateUser(client, login, password, callback) {
             client.UserId = user.Id;
         }
         callback(match);
+    });
+}
+function RegisterUser(client, message, callback) {
+    Log.d("Chatty", "ChatServer", "RegisterUser", "New request of registration by " + client.UID);
+    var u = new lazyUac.DataModel.User(message.data.Firstname, message.data.LastName, message.data.UserName, message.data.password, lazyUac.DataModel.Role.USER);
+    userManager.AddUser(u, function (user) {
+        if (user) {
+            Log.i("Chatty", "ChatServer", "RegisterUser", "New user register " + user.Id);
+        }
+        callback(user != null, user != null ? user.Id : null);
     });
 }
 function startChatty() {

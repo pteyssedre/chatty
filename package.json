@@ -25,6 +25,8 @@
   },
   "homepage": "https://github.com/pteyssedre/chatty#readme",
   "dependencies": {
+    "gulp": "^3.9.1",
+    "gulp-webserver": "^0.9.1",
     "lazy-format-logger": "0.0.3",
     "lazy-uac": "0.0.4",
     "typescript": "^1.8.10",

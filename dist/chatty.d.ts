@@ -1,10 +1,19 @@
 import lazyFL = require("lazy-format-logger");
 export declare module Chatty {
     interface Authenticator {
-        (client: ChatClient, login: string, password: string, callback: (success: boolean) => void): any;
+        (client: ChatClient, login: string, password: string, callback: (success: boolean) => void): void;
+    }
+    interface Registrator {
+        (client: ChatClient, message: ChatMessage, callback: (success: boolean, userId: string) => void): void;
     }
     interface MessageParser {
         (message: string, client: ChatClient): void;
+    }
+    interface ChattyOptions {
+        onMessage?: MessageParser;
+        onAuthentication?: Authenticator;
+        onRegistration?: Registrator;
+        port?: number;
     }
     enum ChatMessageType {
         AUTHENTICATION_MESSAGE = 0,
@@ -12,6 +21,7 @@ export declare module Chatty {
         LISTING_USERS_MESSAGE = 2,
         EXCHANGE_MESSAGE = 3,
         USER_STATUS_MESSAGE = 4,
+        USER_REGISTRATION = 5,
     }
     enum UserStatus {
         OFFLINE = 0,
@@ -26,13 +36,17 @@ export declare module Chatty {
         private clients;
         private msgParser;
         private authenticator;
+        private registration;
         static setLevel(level: lazyFL.LogLevel): void;
-        constructor(port?: number, msgParser?: MessageParser, authenticator?: Authenticator);
+        constructor(options?: ChattyOptions);
         Connect(callback: () => void): void;
         private _addClient(socket);
         private _removeClient(client);
         private _onMessage(message, client);
         private _onAuthentication(client, login, password, callback);
+        private _onRegistration(client, message, callback);
+        private _broadcastMessage(client, message);
+        private _exchangeMessage(client, message);
     }
     class ChatClient {
         private socket;

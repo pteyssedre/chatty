@@ -22,6 +22,7 @@ var Chatty;
         ChatMessageType[ChatMessageType["LISTING_USERS_MESSAGE"] = 2] = "LISTING_USERS_MESSAGE";
         ChatMessageType[ChatMessageType["EXCHANGE_MESSAGE"] = 3] = "EXCHANGE_MESSAGE";
         ChatMessageType[ChatMessageType["USER_STATUS_MESSAGE"] = 4] = "USER_STATUS_MESSAGE";
+        ChatMessageType[ChatMessageType["USER_REGISTRATION"] = 5] = "USER_REGISTRATION";
     })(Chatty.ChatMessageType || (Chatty.ChatMessageType = {}));
     var ChatMessageType = Chatty.ChatMessageType;
     (function (UserStatus) {
@@ -33,23 +34,14 @@ var Chatty;
     })(Chatty.UserStatus || (Chatty.UserStatus = {}));
     var UserStatus = Chatty.UserStatus;
     var ChatServer = (function () {
-        function ChatServer(port, msgParser, authenticator) {
-            this.chatPort = port;
-            if (isNaN(this.chatPort)) {
-                this.chatPort = 9991;
+        function ChatServer(options) {
+            if (!options) {
+                options = {};
             }
-            if (msgParser) {
-                this.msgParser = msgParser;
-            }
-            else {
-                this.msgParser = this._onMessage;
-            }
-            if (authenticator) {
-                this.authenticator = authenticator;
-            }
-            else {
-                this.authenticator = this._onAuthentication;
-            }
+            this.chatPort = isNaN(options.port) ? 9991 : options.port;
+            this.msgParser = options.onMessage ? options.onMessage : this._onMessage;
+            this.authenticator = options.onAuthentication ? options.onAuthentication : this._onAuthentication;
+            this.registration = options.onRegistration ? options.onRegistration : this._onRegistration;
             this.clients = [];
         }
         ChatServer.setLevel = function (level) {
@@ -81,6 +73,7 @@ var Chatty;
             var index = this.clients.indexOf(client);
             Log.i("ChatServer", "server", "removeClient", "removing client " + client.UID);
             this.clients.splice(index, 1);
+            client = null;
         };
         ChatServer.prototype._onMessage = function (message, client) {
             if (message) {
@@ -89,8 +82,10 @@ var Chatty;
                     var type = Number(parsed.type);
                     if (!isNaN(type)) {
                         switch (type) {
-                            case 0:
+                            case ChatMessageType.AUTHENTICATION_MESSAGE:
                                 if (!parsed.credential || client.isAuthenticated) {
+                                    // error to client  ? "invalid request" ?
+                                    return; //for now ignore the message
                                 }
                                 Log.d("ChatServer", "server", "onMessage", "client request auth by " + client.UID);
                                 /**
@@ -106,32 +101,56 @@ var Chatty;
                                     client.send(msg);
                                 });
                                 break;
-                            case 1:
+                            case ChatMessageType.BROADCAST_MESSAGE:
                                 Log.d("ChatServer", "server", "onMessage", "client request broadcast by " + client.UID);
-                                /**
-                                 * internal
-                                 */
+                                if (!parsed.senderId) {
+                                    Log.e("ChatServer", "server", "BROADCAST_MESSAGE", "no senderId set. It will be ignored, origin " + client.UID);
+                                    return;
+                                }
+                                this._broadcastMessage(client, parsed);
                                 break;
-                            case 2:
+                            case ChatMessageType.LISTING_USERS_MESSAGE:
                                 Log.d("ChatServer", "server", "onMessage", "client request listing by " + client.UID);
                                 /**
                                  * internal
                                  */
                                 break;
-                            case 3:
+                            case ChatMessageType.EXCHANGE_MESSAGE:
                                 Log.d("ChatServer", "server", "onMessage", "client request exchange by " + client.UID);
+                                if (!parsed.destination) {
+                                    Log.e("ChatServer", "server", "EXCHANGE_MESSAGE", "no destination set. It will be ignored, origin " + client.UID);
+                                    return;
+                                }
+                                this._exchangeMessage(client, parsed);
                                 break;
-                            case 4:
+                            case ChatMessageType.USER_STATUS_MESSAGE:
                                 Log.d("ChatServer", "server", "onMessage", "client request status change by " + client.UID);
                                 /**
                                  * internal & external
                                  */
                                 break;
+                            case ChatMessageType.USER_REGISTRATION:
+                                if (client.isAuthenticated) {
+                                    // error to client  ? "invalid request" ?
+                                    return; //for now ignore the message
+                                }
+                                this.registration(client, parsed, function (success, userId) {
+                                    if (success) {
+                                        client.isAuthenticated = true;
+                                        client.UserId = userId;
+                                    }
+                                    var msg = new ChatMessage({
+                                        result: success ? "ok" : "nok",
+                                        time: new Date().getTime(),
+                                        userId: success ? client.UserId : null,
+                                    }, ChatMessageType.USER_REGISTRATION, client.UID);
+                                    client.send(msg);
+                                });
+                                break;
                         }
                     }
                     else {
                         Log.c("ChatServer", "server", "onMessage", "message doesn't have any type to act, it will be ignored. Client:" + client.UID);
-                        console.error("ERROR", new Date(), "message doesn't have any type to act, it will be ignored");
                     }
                 }
                 catch (JSONException) {
@@ -150,6 +169,45 @@ var Chatty;
             else {
                 Log.e("ChatServer", "server", "onAuthentication", "invalid stub login by" + client.UID);
                 callback(false);
+            }
+        };
+        ChatServer.prototype._onRegistration = function (client, message, callback) {
+            var index = this.clients.indexOf(client);
+            if (message) {
+                Log.d("ChatServer", "server", "_onRegistration", "new registration for " + client.UID, index);
+                callback(true, Guid.newGuid());
+            }
+            else {
+                Log.d("ChatServer", "server", "_onRegistration", "registration is invalid for " + client.UID, index);
+                callback(false, null);
+            }
+        };
+        ChatServer.prototype._broadcastMessage = function (client, message) {
+            var cci = this.clients.indexOf(client);
+            for (var i = 0; i < this.clients.length; i++) {
+                if (i != cci) {
+                    var c = this.clients[i];
+                    message.destination = c.isAuthenticated ? c.UserId : c.UID;
+                    message.senderId = client.isAuthenticated ? client.UserId : client.UID;
+                    c.send(message);
+                }
+            }
+        };
+        ChatServer.prototype._exchangeMessage = function (client, message) {
+            var cci = client.isAuthenticated ? client.UserId : client.UID;
+            var dcs = this.clients.filter(function (c) {
+                return c.UID === message.destination || c.UserId === message.destination;
+            });
+            if (dcs && dcs.length > 0) {
+                for (var i = 0; i < dcs.length; i++) {
+                    var c = dcs[i];
+                    if ((c.isAuthenticated && c.UserId === cci) || c.UID === cci) {
+                        Log.e("ChatServer", "server", "_exchangeMessage", "trying to exchange with sender from " + client.UID);
+                        continue;
+                    }
+                    Log.d("ChatServer", "server", "_exchangeMessage", "Exchange done for client " + client.UID);
+                    c.send(message);
+                }
             }
         };
         return ChatServer;
