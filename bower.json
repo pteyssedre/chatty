@@ -1,0 +1,31 @@
+{
+  "name": "chatty-client",
+  "description": "chat server using encrypted communication",
+  "main": "client/index.html",
+  "authors": [
+    "pteyssedre"
+  ],
+  "license": "Apache-2.0",
+  "keywords": [
+    "chat",
+    "server",
+    "encrypted",
+    "encryption",
+    "rsa",
+    "aes"
+  ],
+  "homepage": "https://github.com/pteyssedre/chatty",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "angular": "^1.5.7",
+    "angular-material": "^1.0.9",
+    "angular-ui-router": "^0.3.1"
+  }
+}

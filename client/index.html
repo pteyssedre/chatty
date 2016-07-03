@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Chatty client</title>
+    <!-- Angular Material style sheet -->
+    <link rel="stylesheet" href="bower/angular-material/angular-material.css">
+    <link rel="stylesheet" href="css/chatty-client.css">
+
+    <script src="bower/angular/angular.js"></script>
+    <script src="bower/angular-animate/angular-animate.js"></script>
+    <script src="bower/angular-aria/angular-aria.js"></script>
+    <script src="bower/angular-messages/angular-messages.js"></script>
+    <script src="bower/angular-ui-router/release/angular-ui-router.js"></script>
+    <script src="bower/angular-material/angular-material.js"></script>
+    <style type="text/css">
+
+    </style>
+</head>
+<body ng-app="ChattyClient" class="main-bg" ng-cloak layout="column">
+
+<div ui-view="toolbar"></div>
+
+<md-content layout="row" ui-view="content" class="no-bg"></md-content>
+<script src="js/chatty-client.js"></script>
+<script src="js/user-service.js"></script>
+<script src="js/socket-factory.js"></script>
+<script src="js/toolbar-controller.js"></script>
+<script src="js/login-controller.js"></script>
+<script src="js/register-controller.js"></script>
+<script src="js/contact-controller.js"></script>
+</body>
+</html>

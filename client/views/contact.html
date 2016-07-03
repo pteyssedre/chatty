@@ -1,0 +1,26 @@
+<md-content layout="row">
+    <md-sidenav
+            class="md-sidenav-left md-whiteframe-z1"
+            md-is-locked-open="$mdMedia('gt-md')">
+        <md-content>
+            <md-list>
+                <md-list-item class="md-3-line" ng-repeat="item in vm.contacts">
+                    <img ng-src="img/icons/account.svg" alt="avatar" class="md-avatar">
+                    <div class="md-list-item-text">
+                        <h3>Brunch this weekend?</h3>
+                        <h4>Min Li Chan</h4>
+                        <p>
+                            I'll be in your neighborhood doing errands.
+                        </p>
+                    </div>
+                    <md-divider inset></md-divider>
+                </md-list-item>
+            </md-list>
+        </md-content>
+    </md-sidenav>
+    <md-content flex>
+        <div>
+            hello
+        </div>
+    </md-content>
+</md-content>

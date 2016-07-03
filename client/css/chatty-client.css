@@ -1,0 +1,28 @@
+.main-bg {
+    background: url("../img/bg.jpg");
+    background-size: cover;
+}
+
+.no-bg {
+    background: rgba(255, 255, 255, 0) none !important;
+}
+
+.transparent {
+    background-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+.transparent label,
+.transparent input,
+.transparent md-checkbox,
+.transparent md-button {
+    text-shadow: #232323 1px 1px 1px;
+}
+
+md-input-container label,
+md-input-container md-checkbox {
+    color: white;
+}
+
+md-checkbox.white ._md-icon {
+    border-color: white;
+}

@@ -25,6 +25,7 @@
   },
   "homepage": "https://github.com/pteyssedre/chatty#readme",
   "dependencies": {
+    "bower": "^1.7.9",
     "gulp": "^3.9.1",
     "gulp-webserver": "^0.9.1",
     "lazy-format-logger": "0.0.3",

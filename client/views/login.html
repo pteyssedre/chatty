@@ -1,0 +1,52 @@
+<div layout="row" layout-fill>
+    <div layout="column" flex>
+        <md-content layout="vertical" flex class="no-bg">
+            <div layout="row" layout-align="center center" layout-fill>
+                <md-content id="login-panel"
+                            class="transparent md-whiteframe-6dp"
+                            layout="column"
+                            flex-xs="100"
+                            flex-sm="50"
+                            flex-lg="25"
+                            layout-padding>
+
+                    <md-input-container class="md-block">
+                        <label>Email</label>
+                        <input ng-model="vm.username" type="email">
+                    </md-input-container>
+
+                    <md-input-container class="md-block">
+                        <label>Password</label>
+                        <input ng-model="vm.password" type="password">
+                    </md-input-container>
+
+                    <md-input-container>
+                        <md-checkbox class="white" aria-label="Finished?">
+                            Remember me
+                        </md-checkbox>
+                    </md-input-container>
+
+                    <md-input-container ng-hide="vm.loading" layout-align="center center" class="md-block">
+                        <div layout="row" layout-sm="column" layout-margin>
+                            <md-button class="md-raised md-primary"
+                                       flex="50"
+                                       flex-sm="100" ng-click="vm.login()">
+                                Login
+                            </md-button>
+                            <md-button class="md-raised"
+                                       flex="50"
+                                       flex-sm="100">
+                                Register
+                            </md-button>
+                        </div>
+                    </md-input-container>
+
+                    <md-progress-circular md-mode='indeterminate'
+                                          ng-show="vm.loading"
+                                          class="md-hue-2"
+                                          md-diameter="30px"></md-progress-circular>
+                </md-content>
+            </div>
+        </md-content>
+    </div>
+</div>
