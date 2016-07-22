@@ -15,10 +15,11 @@
             send: SendMessage,
             connect: ConnectSocket,
             authenticate: Authenticate,
-            getContacts: getContacts
+            getContacts: getContacts,
+            OnMessage: OnMessage
         };
     }
-
+    function OnMessage(e){}
     function SendMessage(message) {
         var s = this;
         if (s.socket != null && s.state.isOpen) {
@@ -40,15 +41,15 @@
 
     function ConnectSocket(callback) {
         var s = this;
-        s.socket = new WebSocket("ws://127.0.0.1:9991");
+        console.log("chatty-client", "connecting");
+        s.socket = new WebSocket("ws://192.168.0.207:9991");
         s.socket.onopen = function () {
             s.state.isOpen = true;
-            console.log("chatty-client", "connecting");
-            if (callback) {
-                callback();
-            }
+            console.log("chatty-client", "connected");
+            return callback();
         };
         s.socket.onmessage = function (e) {
+            s.OnMessage(e);
             console.log("chatty-client", "incoming data", e.data);
             var msg = null;
             try {
@@ -56,32 +57,40 @@
             } catch (exception) {
                 console.error("chatty-client", "error on JSON parse msg", JSON.stringify(exception));
             }
-            switch (msg.type) {
-                case 0:
-                    if (msg.data.result === "ok") {
-                        console.log("chatty-client", "authentication success", msg.data.userId);
-                        s.map['auth.success'].dispatch(msg);
-                    } else {
-                        console.error("chatty-client", "authentication failed");
-                        s.map['auth.fail'].dispatch(msg);
-                    }
-                    break;
-                case 1:
-                    break;
-                case 2:
-                    break;
-                case 3:
-                    break;
-                case 4:
-                    break;
-                case 5:
-                    if (msg.data.result === "ok") {
-                        console.log("chatty-client", "registration success", msg.data.userId);
-                    } else {
-                        console.error("chatty-client", "registration failed");
-                    }
-                    break;
-            }
+
+            // AUTHENTICATION_MESSAGE = 0,
+            // BROADCAST_MESSAGE = 1,
+            // LISTING_USERS_MESSAGE = 2,
+            // EXCHANGE_MESSAGE = 3,
+            // USER_STATUS_MESSAGE = 4,
+            // USER_REGISTRATION = 5
+            // switch (msg.type) {
+            //     case 0:
+            //         if (msg.data.result === "ok") {
+            //             console.log("chatty-client", "authentication success", msg.data.userId);
+            //             s.map['auth.success'].dispatch(msg);
+            //         } else {
+            //             console.error("chatty-client", "authentication failed");
+            //             s.map['auth.fail'].dispatch(msg);
+            //         }
+            //         break;
+            //     case 1:
+            //         break;
+            //     case 2:
+            //         break;
+            //     case 3: //EXCHANGE_MESSAGE
+            //
+            //         break;
+            //     case 4:
+            //         break;
+            //     case 5:
+            //         if (msg.data.result === "ok") {
+            //             console.log("chatty-client", "registration success", msg.data.userId);
+            //         } else {
+            //             console.error("chatty-client", "registration failed");
+            //         }
+            //         break;
+            // }
         };
         s.socket.onerror = function (error) {
             s.state.hasError = true;

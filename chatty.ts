@@ -107,86 +107,87 @@ export module Chatty {
         }
 
         private _onMessage(message: string, client: ChatClient): void {
-            if (message) {
-                try {
-                    let parsed = JSON.parse(message);
-                    let type = Number(parsed.type);
-                    if (!isNaN(type)) {
-                        switch (type) {
-                            case ChatMessageType.AUTHENTICATION_MESSAGE: //USER AUTH
-                                if (!parsed.credential || client.isAuthenticated) {
-                                    // error to client  ? "invalid request" ?
-                                    return; //for now ignore the message
-                                }
-                                Log.d("ChatServer", "server", "onMessage", "client request auth by " + client.UID);
-                                /**
-                                 * Bubble up the authentication request
-                                 * to ensure external authentication
-                                 */
-                                this.authenticator(client, parsed.credential.login, parsed.credential.password,
-                                    success => {
-                                        let msg = new ChatMessage({
-                                            result: success ? "ok" : "nok",
-                                            time: new Date().getTime(),
-                                            userId: success ? client.UserId : null,
-                                        }, ChatMessageType.AUTHENTICATION_MESSAGE, success ? client.UserId : client.UID);
-                                        client.send(msg);
-                                    });
-                                break;
-                            case ChatMessageType.BROADCAST_MESSAGE: //USER BROADCAST
-                                Log.d("ChatServer", "server", "onMessage", "client request broadcast by " + client.UID);
-                                if (!parsed.senderId) {
-                                    Log.e("ChatServer", "server", "BROADCAST_MESSAGE", "no senderId set. It will be ignored, origin " + client.UID);
-                                    return;
-                                }
-                                this._broadcastMessage(client, parsed);
-                                break;
-                            case ChatMessageType.LISTING_USERS_MESSAGE: //USER LISTING
-                                Log.d("ChatServer", "server", "onMessage", "client request listing by " + client.UID);
-                                /**
-                                 * internal
-                                 */
-                                break;
-                            case ChatMessageType.EXCHANGE_MESSAGE: //USER ExCHANGE
-                                Log.d("ChatServer", "server", "onMessage", "client request exchange by " + client.UID);
-                                if (!parsed.destination) {
-                                    Log.e("ChatServer", "server", "EXCHANGE_MESSAGE", "no destination set. It will be ignored, origin " + client.UID);
-                                    return;
-                                }
-                                this._exchangeMessage(client, parsed);
-                                break;
-                            case ChatMessageType.USER_STATUS_MESSAGE: //USER STATUS
-                                Log.d("ChatServer", "server", "onMessage", "client request status change by " + client.UID);
-                                /**
-                                 * internal & external
-                                 */
-                                break;
-                            case ChatMessageType.USER_REGISTRATION:
-                                if (client.isAuthenticated) {
-                                    // error to client  ? "invalid request" ?
-                                    return; //for now ignore the message
-                                }
-                                this.registration(client, parsed, (success: boolean, userId: string): void => {
-                                    if (success) {
-                                        client.isAuthenticated = true;
-                                        client.UserId = userId;
-                                    }
-                                    let msg = new ChatMessage({
-                                        result: success ? "ok" : "nok",
-                                        time: new Date().getTime(),
-                                        userId: success ? client.UserId : null,
-                                    }, ChatMessageType.USER_REGISTRATION, client.UID);
-                                    client.send(msg);
-                                });
-                                break;
-                        }
-                    } else {
-                        Log.c("ChatServer", "server", "onMessage", "message doesn't have any type to act, it will be ignored. Client:" + client.UID);
-                    }
-                } catch (JSONException) {
-                    Log.c("ChatServer", "server", "onMessage", "message can't be parse Client:" + client.UID, JSONException);
-                }
-            }
+            this._broadcastMessage(client, message);
+            // if (message) {
+            //     try {
+            //         let parsed = JSON.parse(message);
+            //         let type = Number(parsed.type);
+            //         if (!isNaN(type)) {
+            //             switch (type) {
+            //                 case ChatMessageType.AUTHENTICATION_MESSAGE: //USER AUTH
+            //                     if (!parsed.credential || client.isAuthenticated) {
+            //                         // error to client  ? "invalid request" ?
+            //                         return; //for now ignore the message
+            //                     }
+            //                     Log.d("ChatServer", "server", "onMessage", "client request auth by " + client.UID);
+            //                     /**
+            //                      * Bubble up the authentication request
+            //                      * to ensure external authentication
+            //                      */
+            //                     this.authenticator(client, parsed.credential.login, parsed.credential.password,
+            //                         success => {
+            //                             let msg = new ChatMessage({
+            //                                 result: success ? "ok" : "nok",
+            //                                 time: new Date().getTime(),
+            //                                 userId: success ? client.UserId : null,
+            //                             }, ChatMessageType.AUTHENTICATION_MESSAGE, success ? client.UserId : client.UID);
+            //                             client.send(msg);
+            //                         });
+            //                     break;
+            //                 case ChatMessageType.BROADCAST_MESSAGE: //USER BROADCAST
+            //                     Log.d("ChatServer", "server", "onMessage", "client request broadcast by " + client.UID);
+            //                     if (!parsed.senderId) {
+            //                         Log.e("ChatServer", "server", "BROADCAST_MESSAGE", "no senderId set. It will be ignored, origin " + client.UID);
+            //                         return;
+            //                     }
+            //                     this._broadcastMessage(client, parsed);
+            //                     break;
+            //                 case ChatMessageType.LISTING_USERS_MESSAGE: //USER LISTING
+            //                     Log.d("ChatServer", "server", "onMessage", "client request listing by " + client.UID);
+            //                     /**
+            //                      * internal
+            //                      */
+            //                     break;
+            //                 case ChatMessageType.EXCHANGE_MESSAGE: //USER ExCHANGE
+            //                     Log.d("ChatServer", "server", "onMessage", "client request exchange by " + client.UID);
+            //                     if (!parsed.destination) {
+            //                         Log.e("ChatServer", "server", "EXCHANGE_MESSAGE", "no destination set. It will be ignored, origin " + client.UID);
+            //                         return;
+            //                     }
+            //                     this._exchangeMessage(client, parsed);
+            //                     break;
+            //                 case ChatMessageType.USER_STATUS_MESSAGE: //USER STATUS
+            //                     Log.d("ChatServer", "server", "onMessage", "client request status change by " + client.UID);
+            //                     /**
+            //                      * internal & external
+            //                      */
+            //                     break;
+            //                 case ChatMessageType.USER_REGISTRATION:
+            //                     if (client.isAuthenticated) {
+            //                         // error to client  ? "invalid request" ?
+            //                         return; //for now ignore the message
+            //                     }
+            //                     this.registration(client, parsed, (success: boolean, userId: string): void => {
+            //                         if (success) {
+            //                             client.isAuthenticated = true;
+            //                             client.UserId = userId;
+            //                         }
+            //                         let msg = new ChatMessage({
+            //                             result: success ? "ok" : "nok",
+            //                             time: new Date().getTime(),
+            //                             userId: success ? client.UserId : null,
+            //                         }, ChatMessageType.USER_REGISTRATION, client.UID);
+            //                         client.send(msg);
+            //                     });
+            //                     break;
+            //             }
+            //         } else {
+            //             Log.c("ChatServer", "server", "onMessage", "message doesn't have any type to act, it will be ignored. Client:" + client.UID);
+            //         }
+            //     } catch (JSONException) {
+            //         Log.c("ChatServer", "server", "onMessage", "message can't be parse Client:" + client.UID, JSONException);
+            //     }
+            // }
         }
 
         private _onAuthentication(client: ChatClient, login: string, password: string, callback: (success: boolean)=>void) {
@@ -213,7 +214,7 @@ export module Chatty {
             }
         }
 
-        private _broadcastMessage(client: Chatty.ChatClient, message: ChatMessage) {
+        private _broadcastMessage(client: Chatty.ChatClient, message: any) {
             let cci = this.clients.indexOf(client);
             for (var i = 0; i < this.clients.length; i++) {
                 if (i != cci) {

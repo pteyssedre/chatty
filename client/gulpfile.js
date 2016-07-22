@@ -4,7 +4,8 @@ var gulp = require('gulp'),
 gulp.task('WebServer', function() {
     gulp.src('')
         .pipe(WebServer({
-            livereload: true,
+            host:'0.0.0.0',
+            livereload: false,
             open: true
         }));
 });

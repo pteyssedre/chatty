@@ -51,6 +51,21 @@
                         controllerAs: 'vm'
                     }
                 }
+            })
+            .state('call', {
+                url: '/call',
+                views: {
+                    'content': {
+                        templateUrl: 'views/call.html',
+                        controller: 'CallController',
+                        controllerAs: 'vm'
+                    },
+                    'toolbar': {
+                        templateUrl: 'views/toolbar.html',
+                        controller: 'ToolbarController',
+                        controllerAs: 'vm'
+                    }
+                }
             });
     }
 })();

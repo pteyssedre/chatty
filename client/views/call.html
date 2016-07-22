@@ -1,0 +1,16 @@
+<div layout="column">
+
+    <div layout="row">
+        <md-button ng-click="vm.DoOffer(false)"> DoOffer Video </md-button>
+        <md-button ng-click="vm.GetVideo()"> Get Video </md-button>
+        <md-button ng-if="vm.devices.length > 0" ng-click="vm.ConnectVideo()"> Display local video </md-button>
+    </div>
+    <div layout="row">
+        <div id="myLocalFeed">
+
+        </div>
+
+        <div id="remoteFeed">
+        </div>
+    </div>
+</div>
